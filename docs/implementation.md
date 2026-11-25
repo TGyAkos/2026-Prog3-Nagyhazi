@@ -5,9 +5,9 @@
 **Factcalc (Factory Calculator)** is a desktop Java + Swing application for designing, calculating, and persisting factory production lines (e.g., Factorio, Satisfactory).
 
 ### Core Technology Choices
-- **Language & Build:** Java 22 (`pom.xml`), Maven
+- **Language & Build:** Java 22 (`../pom.xml`), Maven
 - **UI Framework:** Pure Java Swing (standard Swing Look & Feel, e.g., Nimbus/System L&F — no third-party UI libraries)
-- **UI Language:** **Hungarian** (all labels, menus, buttons, dialogs, validation/error messages); **English** for source code, identifiers, and documentation
+- **UI Language:** **English** (all labels, menus, buttons, dialogs, validation/error messages); **English** for source code, identifiers, and documentation
 - **Dependencies (Minimal):**
   - `com.google.code.gson:gson` — JSON serialization/deserialization for catalogs and saved production plans
   - `org.junit.jupiter:junit-jupiter` (test scope) — Unit and integration tests
@@ -325,77 +325,76 @@ Enabled **only** in `MAX_OUTPUT` mode (single target item $T$). Performs a discr
 ## 6. Swing UI Design (Hungarian Localization)
 
 ### 6.1 Main Window (`MainFrame`)
-- **Title:** `Factcalc — Gyártósor Tervező`
+- **Title:** `Factcalc`
 - **Menu Bar (`JMenuBar`):**
-  - `Fájl`:
-    - `Új katalógus`
-    - `Katalógus megnyitása...` (load preset JSON)
-    - `Katalógus mentése` / `Katalógus mentése másként...`
+  - `File`:
+    - `New catalog`
+    - `Open catalog...` (load preset JSON)
+    - `Save catalog` / `Save catalog as...`
     - Separator
-    - `Gyártósor terv betöltése...`
-    - `Gyártósor terv mentése...`
+    - `Open production line...`
+    - `Save production line...`
     - Separator
-    - `Kilépés`
-  - `Nézet`:
-    - `Alapértelmezett példa katalógus betöltése`
+    - `Exit`
+  - `View`:
+    - `Load default catalog`
 - **Main Tabs (`JTabbedPane`):**
-  1. `Gyártósor tervező` (`PlannerPanel`)
-  2. `Itemek` (`ItemManagerPanel`)
-  3. `Gépek` (`MachineManagerPanel`)
-  4. `Receptek` (`RecipeManagerPanel`)
-- **Bottom Status Bar:** Active catalog name, counts (`Itemek: X | Gépek: Y | Receptek: Z`), unsaved changes indicator.
+  1. `Production line planner` (`PlannerPanel`)
+  2. `Items` (`ItemManagerPanel`)
+  3. `Machines` (`MachineManagerPanel`)
+  4. `Recepies` (`RecipeManagerPanel`)
+- **Bottom Status Bar:** Active catalog name, counts (`Items: X | Machines: Y | Recepies: Z`), unsaved changes indicator.
 
 ### 6.2 Catalog Management Tabs (CRUD)
-Each tab has a filter/search bar, a sortable `JTable` with 24x24 icons (loaded asynchronously via `IconCacheService`), and action buttons (`Hozzáadás`, `Szerkesztés`, `Törlés`):
+Each tab has a filter/search bar, a sortable `JTable` with 24x24 icons (loaded asynchronously via `IconCacheService`), and action buttons (`Add`, `Edit`, `Delete`):
 - **`ItemManagerPanel` & `ItemEditDialog`:**
-  - Fields: `Név`, `Kép URL / útvonal` (with `Tallózás...` file chooser + live preview).
+  - Fields: `Name`, `Icon URL / path` (with `Browse...` file chooser + live preview).
 - **`MachineManagerPanel` & `MachineEditDialog`:**
-  - Fields: `Név`, `Típus` (editable `JComboBox` pre-populated with existing types), `Szorzó` (`JSpinner`, `> 0`), `Kép URL / útvonal`.
+  - Fields: `Name`, `Type` (editable `JComboBox` pre-populated with existing types), `Multiplier` (`JSpinner`, `> 0`), `Icon URL / path`.
 - **`RecipeManagerPanel` & `RecipeEditDialog`:**
-  - Fields: `Név`, `Elkészítési idő (mp)`, `Eredeti recept` (`JCheckBox`), `Kép URL / útvonal`.
+  - Fields: `Name`, `Production time (sec)`, `Original recipe` (`JCheckBox`), `Icon URL / path`.
   - Dynamic sub-tables with Add/Remove rows for:
-    - `Felhasználható gépek / géptípusok` (Mode selector: `Specifikus gép` vs `Géptípus`, target selector, `Recept szorzó`)
-    - `Bemenetek` (`Item`, `Darabszám`)
-    - `Kimenetek` (`Item`, `Darabszám`)
-    - `Melléktermékek` (`Item`, `Darabszám`)
+    - `Usable machines / machine types` (Mode selector: `Specific machine` vs `Machine type`, target selector, `Recipe multiplier`)
+    - `Inputs` (`Item`, `Quantity`)
+    - `Outputs` (`Item`, `Quantity`)
+    - `Byproducts` (`Item`, `Quantity`)
 
 ### 6.3 Production Line Planner (`PlannerPanel`)
 
 Organized as a `JSplitPane`:
 
 #### Left Panel — Configuration (`PlanConfigPanel`)
-- **Számítási mód:** Radio buttons:
-  - `Cél mennyiségből gyártósor` (`TARGET_OUTPUT`)
-  - `Bemenetből maximum kimenet` (`MAX_OUTPUT`)
-- **Megjelenítési mértékegység:** `JComboBox` (`item/mp`, `item/perc`, `item/óra`) — immediately converts displayed numbers without losing precision.
-- **Cél kimenetek:**
-  - In `TARGET_OUTPUT` mode: editable table of `(Item, Mennyiség, Egység)` with `+` / `-` buttons; dropdown **excludes** non-craftable and inputless-only items.
-  - In `MAX_OUTPUT` mode: single target item selector (`Cél item`) + `Auto (alternatív receptek optimalizálása)` `JCheckBox` (hidden/disabled in `TARGET_OUTPUT` mode).
-- **Megadott bemenetek:**
-  - Editable table of `(Item, Mennyiség, Egység)` with `+` / `-` buttons (in `TARGET_OUTPUT` mode, quantity can be optional/unlimited or capped; in `MAX_OUTPUT` mode, positive quantity is required).
-- **Recept beállítások:**
-  - Button: `Alternatív receptek kiválasztása...` -> opens `RecipeOverrideDialog` listing items with multiple recipes so the user can visually pick original or alternative recipes before or after solving.
-  - Button: `Választások visszaállítása` (resets overrides to defaults).
+- **Calculation Mode:** Radio buttons:
+  - `Production line from target quantity` (`TARGET_OUTPUT`)
+  - `Maximum output from input` (`MAX_OUTPUT`)
+- **Display Unit:** `JComboBox` (`item/s`, `item/min`, `item/h`) — immediately converts displayed numbers without losing precision.
+- **Target Outputs:**
+  - In `TARGET_OUTPUT` mode: editable table of `(Item, Quantity, Unit)` with `+` / `-` buttons; dropdown **excludes** non-craftable and inputless-only items.
+  - In `MAX_OUTPUT` mode: single target item selector (`Target Item`) + `Auto (optimize alternative recipes)` `JCheckBox` (hidden/disabled in `TARGET_OUTPUT` mode).
+- **Provided Inputs:**
+  - Editable table of `(Item, Quantity, Unit)` with `+` / `-` buttons (in `TARGET_OUTPUT` mode, quantity can be optional/unlimited or capped; in `MAX_OUTPUT` mode, positive quantity is required).
+- **Recipe Settings:**
+  - Button: `Select Alternative Recipes...` -> opens `RecipeOverrideDialog` listing items with multiple recipes so the user can visually pick original or alternative recipes before or after solving.
+  - Button: `Reset Selections` (resets overrides to defaults).
 - **Primary Action Buttons:**
-  - `Számítás` (runs solver)
-  - `Terv mentése...` / `Terv betöltése...`
+  - `Calculate` (runs solver)
+  - `Save Plan...` / `Load Plan...`
 
 #### Right Panel — Results (`PlanResultPanel`)
 Contains a **Notice Banner** at the top (displays `INFO` such as self-sustaining loops, `WARNING`s, or `ERROR`s) and 4 sub-tabs:
-1. **`Függőségi fa` (`JTree`):**
+1. **`Dependency Tree` (`JTree`):**
    - Hierarchical tree rooted at each target output, expanding recipes -> inputs -> upstream recipes down to external/raw inputs.
-   - Each node displays icon, recipe/item name, flow rate (`item/mp|perc|óra`), selected machine + count (`2.50 (3 db)`), and tags like `[Alternatív]`, `[Külső bemenet]`, `[Számított bemenet]`, or `[Rekurzív visszacsatolás]` (stops infinite expansion cleanly).
-2. **`Gyártási lépések` (`JTable`):**
-   - Columns: `Recept`, `Típus (Eredeti/Alt)`, `Gép` (**interactive `JComboBox` cell editor** listing only compatible machines for that recipe — changing it immediately recalculates machine counts!), `Effektív idő (mp)`, `Gépek száma` (`2.50 (3 db)`), `Bemenetek`, `Kimenetek`, `Melléktermékek`, `Rekurzív felhasználás` (**interactive `JCheckBox`** enabled only when a recipe has a recyclable byproduct — toggling immediately recalculates!).
-   - Context action / button: `Recept cseréje...` to switch the selected step's item to an alternative recipe.
-3. **`Összeköttetések` (`JTable`):**
+   - Each node displays icon, recipe/item name, flow rate (`item/s|min|h`), selected machine + count (`2.50 (3 units)`), and tags like `[Alternative]`, `[External Input]`, `[Calculated Input]`, or `[Recursive Feedback]` (stops infinite expansion cleanly).
+2. **`Production Steps` (`JTable`):**
+   - Columns: `Recipe`, `Type (Original/Alt)`, `Machine` (**interactive `JComboBox` cell editor** listing only compatible machines for that recipe — changing it immediately recalculates machine counts!), `Effective Time (s)`, `Machine Count` (`2.50 (3 units)`), `Inputs`, `Outputs`, `Byproducts`, `Recursive Usage` (**interactive `JCheckBox`** enabled only when a recipe has a recyclable byproduct — toggling immediately recalculates!).
+   - Context action / button: `Change Recipe...` to switch the selected step's item to an alternative recipe.
+3. **`Connections` (`JTable`):**
    - Explicit graph edge list showing how machines/recipes connect through items:
-     - Columns: `Forrás`, `Item`, `Mennyiség`, `Cél`, `Kapcsolat típusa` (`Bemenet`, `Köztes`, `Végső kimenet`, `Melléktermék kimenet`, `Rekurzív visszacsatolás`).
-4. **`Összegzés` (`JPanel` with summary tables):**
-   - **Bemenetek:** separates `Felhasználó által megadott bemenetek` (marking bottlenecks in `MAX_OUTPUT` mode) and `Automatikusan számított hiányzó bemenetek`.
-   - **Kimenetek & Melléktermékek:** Final target outputs + unrecycled/surplus byproduct outputs.
-   - **Összesített gépszükséglet:** Aggregated count per concrete `Machine` across all steps (exact + integer sum).
-
+     - Columns: `Source`, `Item`, `Quantity`, `Target`, `Connection Type` (`Input`, `Intermediate`, `Final Output`, `Byproduct Output`, `Recursive Feedback`).
+4. **`Summary` (`JPanel` with summary tables):**
+   - **Inputs:** separates `User-Provided Inputs` (marking bottlenecks in `MAX_OUTPUT` mode) and `Automatically Calculated Missing Inputs`.
+   - **Outputs & Byproducts:** Final target outputs + unrecycled/surplus byproduct outputs.
+   - **Total Machine Requirements:** Aggregated count per concrete `Machine` across all steps (exact + integer sum).
 ---
 
 ## 7. Implementation Roadmap (Phased)
@@ -407,7 +406,7 @@ Contains a **Notice Banner** at the top (displays `INFO` such as self-sustaining
 
 ### Phase 2: Persistence & Catalog Service
 - Implement `GsonFactory`, `CatalogRepository`, and `PlanRepository`.
-- Create `src/main/resources/presets/sample_catalog.json` containing examples of basic chains, multi-machine types + specific overrides, alternative recipes, inputless extraction recipes, multi-output recipes, and recursive byproduct loops.
+- Create `../src/main/resources/presets/sample_catalog.json` containing examples of basic chains, multi-machine types + specific overrides, alternative recipes, inputless extraction recipes, multi-output recipes, and recursive byproduct loops.
 - Implement `CatalogService` with full validation and referential-integrity deletion blocking.
 - Write unit tests for persistence round-trips and CRUD/integrity rules.
 
